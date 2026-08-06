@@ -218,12 +218,35 @@ fn trace_config_error_to_config(err: TraceConfigError) -> config::ConfigError {
 /// Server-related settings
 ///
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Deserialize)]
 //#[serde(deny_unknown_fields)]
 pub struct AuthSettings {
     pub jwk: Option<JWKServiceSettings>,
     pub jwt_audience: Option<Vec<String>>,
     pub jwt_issuer: Option<String>,
+    /// Bearer token this server presents to the rebac service.
+    ///
+    /// `RebacApi::CreateResource` and `RebacApi::DeleteResource` are called on
+    /// the server's own behalf rather than the caller's, so a rebac deployment
+    /// that authenticates those calls needs a service credential here. When
+    /// unset the rebac client sends the request exactly as before.
+    pub rebac_service_token: Option<String>,
+}
+
+impl std::fmt::Debug for AuthSettings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Avoid printing the rebac service token; the loaded settings are
+        // logged in full during startup.
+        f.debug_struct("AuthSettings")
+            .field("jwk", &self.jwk)
+            .field("jwt_audience", &self.jwt_audience)
+            .field("jwt_issuer", &self.jwt_issuer)
+            .field(
+                "rebac_service_token",
+                &self.rebac_service_token.as_ref().map(|_| "<redacted>"),
+            )
+            .finish()
+    }
 }
 
 #[derive(Clone, Debug, Deserialize)]
