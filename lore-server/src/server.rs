@@ -2060,6 +2060,16 @@ async fn async_main(settings: (Settings, StringHash), config: ServerConfig) -> R
         None => None,
     };
 
+    if let Some(rebac_service_token) = settings
+        .server
+        .auth
+        .as_ref()
+        .and_then(|auth| auth.rebac_service_token.clone())
+    {
+        info!("Rebac service token configured, rebac calls will be authenticated");
+        crate::authnz::rebac::set_service_token(rebac_service_token);
+    }
+
     if let Some(auth) = settings.server.auth.as_ref() {
         let auth_url = settings
             .environment

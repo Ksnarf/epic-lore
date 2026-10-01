@@ -332,7 +332,7 @@ fn trace_config_error_to_config(err: TraceConfigError) -> config::ConfigError {
 ///
 
 #[serde_with::serde_as]
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Deserialize)]
 //#[serde(deny_unknown_fields)]
 pub struct AuthSettings {
     /// Optional JWK override. Verification is enabled by `[server.auth]`.
@@ -391,6 +391,40 @@ pub struct AuthSettings {
     pub repository_catalog_url: Option<String>,
     /// OIDC provider settings advertised for clients.
     pub oidc: Option<OidcSettings>,
+    /// Bearer token this server presents to the rebac service.
+    ///
+    /// `RebacApi::CreateResource` and `RebacApi::DeleteResource` are called on
+    /// the server's own behalf rather than the caller's, so a rebac deployment
+    /// that authenticates those calls needs a service credential here. When
+    /// unset the rebac client sends the request exactly as before.
+    pub rebac_service_token: Option<String>,
+}
+
+impl std::fmt::Debug for AuthSettings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Avoid printing the rebac service token; the loaded settings are
+        // logged in full during startup.
+        f.debug_struct("AuthSettings")
+            .field("jwk", &self.jwk)
+            .field("jwt_audience", &self.jwt_audience)
+            .field("jwt_issuer", &self.jwt_issuer)
+            .field("jwt_typ", &self.jwt_typ)
+            .field("permission_claim", &self.permission_claim)
+            .field("resource_claim", &self.resource_claim)
+            .field("resource_id_claim", &self.resource_id_claim)
+            .field("resource_id_template", &self.resource_id_template)
+            .field("resource_wildcard", &self.resource_wildcard)
+            .field("identity_claim", &self.identity_claim)
+            .field("baseline_access", &self.baseline_access)
+            .field("repository_catalog", &self.repository_catalog)
+            .field("repository_catalog_url", &self.repository_catalog_url)
+            .field("oidc", &self.oidc)
+            .field(
+                "rebac_service_token",
+                &self.rebac_service_token.as_ref().map(|_| "<redacted>"),
+            )
+            .finish()
+    }
 }
 
 /// What the environment service advertises about the OIDC provider,
